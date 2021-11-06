@@ -3,84 +3,219 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { InputText } from 'primereact/inputtext';
+import { RadioButton } from 'primereact/radiobutton';
+import { InputNumber } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { Calendar } from 'primereact/calendar';
 
 function RaceCalendar() {
 
-  const [events, setEvents] = useState([]);
-  const [displayModal, setDisplayModal] = useState(false);
+    const [events, setEvents] = useState([]);
+    const [displayModal, setDisplayModal] = useState(false);
+    const [isUpdate, setIsUpdate] = useState(false);
+    const [calendar, setCalendar] = useState(null);
 
-  const dropEvt = (info) => {
-    setDisplayModal(true);
-    const { start, end } = info.oldEvent._instance.range;
-    console.log(start, end);
-    const {
-      start: newStart,
-      end: newEnd
-    } = info.event._instance.range;
-    console.log(newStart, newEnd);
-    if (new Date(start).getDate() === new Date(newStart).getDate()) {
-      info.revert();
+    const [raceDate, setRaceDate] = useState(null);
+    const [raceName, setRaceName] = useState('');
+    const [raceType, setRaceType] = useState(null);
+    const [raceDistance, setRaceDistance] = useState(0.0);
+    const [raceZip, setRaceZip] = useState('');
+    const [raceId, setRaceId] = useState('');
+
+    const  raceDateChangeHandler = (event) => {
+        setRaceDate(event.value);
     }
-  };
 
-  const handleDateClick =(arg) => {
-    setDisplayModal(true);
-  }
+    const raceNameChangeHandler = (event) => {
+        setRaceName(event.target.value);
+    }
 
-const onHide = () => {
-  setDisplayModal(false);
-}
-const renderFooter = () => {
+    const raceTypeChangeHandler = (event) => {
+        setRaceType(event.value);
+    }
+
+    const distanceChangeHandler = (event) =>{
+        setRaceDistance(event.value);
+    }
+
+    const raceZipChangeHandler = (event) =>{
+        setRaceZip(event.target.value);
+    }
+
+    const dropEvt = (info) => {
+        setDisplayModal(true);
+        const { start, end } = info.oldEvent._instance.range;
+        console.log(start, end);
+        const {
+        start: newStart,
+        end: newEnd
+        } = info.event._instance.range;
+        console.log(newStart, newEnd);
+        if (new Date(start).getDate() > new Date(newStart).getDate()) {
+        info.revert();
+        }
+    };
+
+    const handleDateClick = (args) => {
+        resetModal();
+        setIsUpdate(false);
+        setDisplayModal(true);
+    }
+
+    const handleEventClick =(args) => {
+        let info = args.event;
+        setCalendar(args.view.calendar); 
+        setIsUpdate(true);
+        setDisplayModal(true);
+        setRaceName(info.title);
+        setRaceId(info.id);
+        setRaceType(info.extendedProps.type);
+        setRaceDate(info.start);
+        setRaceDistance(info.extendedProps.distance);
+        setRaceZip(info.extendedProps.zip);
+    }
+
+    const onHide = () => {
+        setDisplayModal(false);
+    }
+
+    const addEvent = () => {
+        let event = {
+            title: raceName,
+            start: "2021-11-20T05:00:00.000+00:00"
+        }
+    }
+
+    const updateEvent = () => {
+        
+        setIsUpdate(false);
+
+        let calEvent = calendar.getEventById(raceId);
+        calEvent.setProp('title', raceName);
+        calEvent.setStart(raceDate);
+        calEvent.setExtendedProp('type', raceType);
+        calEvent.setExtendedProp('distance', raceDistance);
+        calEvent.setExtendedProp('zip', '20171');
+
+        //TODO: move to a DB Layer
+        let headers = new Headers();
+
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');
+    
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:8080');
+        headers.append('Access-Control-Allow-Credentials', 'true');
+        headers.append('GET', 'POST', 'OPTIONS', 'PUT');
+        
+        const requestOptions = {
+            method: 'PUT',
+            mode: 'cors',
+            headers: headers,
+            body: JSON.stringify({
+                "race_id": raceId,
+                "date": "2021-11-20T05:00:00.000+00:00",
+                "distance": raceDistance,
+                "type": raceType,
+                "zip": raceZip,
+                "name": raceName
+            })
+        };
+        fetch('http://localhost:8080/racetracker/race/'+raceId, requestOptions)
+            .then((response)=> {
+                resetModal(response);
+                setDisplayModal(false);
+            });
+    }
+
+    const resetModal = (data) =>{
+        let x = data;
+        setRaceDistance(0);
+        setRaceId('');
+        setRaceName('');
+        setRaceType('');
+        setRaceZip('');
+    }
+
+    useEffect(() => {
+
+        // TODO: move to DB Layer
+
+        fetch('http://localhost:8080/racetracker/races')
+        .then(response => response.json())
+        .then((data) => {
+            let result = data.map((obj, index)=>{
+                return {id: obj.race_id, 
+                    title: obj.name,
+                    start: obj.date,
+                    extendedProps: {
+                        type: obj.type,
+                        distance: obj.distance,
+                        zip: obj.zip
+                    }};
+            });
+            setEvents(result);
+        });
+    }, []);
+
+    const renderFooter = () => {
+        if(isUpdate){
+            return (
+                <div>
+                    <Button label="Delete" icon="pi pi-times" onClick={onHide} className="p-button-danger"/>
+                    <Button label="Update" icon="pi pi-check" onClick={updateEvent} autoFocus />
+                </div>
+            );
+        } 
         return (
             <div>
-                <Button label="No" icon="pi pi-times" onClick={onHide} className="p-button-text" />
-                <Button label="Yes" icon="pi pi-check" onClick={onHide} autoFocus />
-                <Button label="Delete" icon="pi pi-times" onClick={onHide} className="p-button-danger"/>
+                <Button label="Add" className="p-button-success" icon="pi pi-check" onClick={addEvent} autoFocus />
             </div>
         );
     }
 
-  useEffect(() => {
+    return (
+        <div className="RaceCalendar">
+        <div className="content p-p-4">
+            <FullCalendar 
+            events={events} 
+            eventDrop = {dropEvt}
+            eventClick = {handleEventClick}
+            dateClick = {handleDateClick}
+            initialView='dayGridMonth' 
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            headerToolbar={{ left: 'prev,next today', center: 'title', right: null }} 
+            editable selectable selectMirror dayMaxEvents />
 
-    fetch('http://localhost:8080/racetracker/races')
-      .then(response => response.json())
-      .then((data) => {
-          let result = data.map((obj, index)=>{
-            return {id: obj.race_id, 
-                  title: obj.type,
-                  start: obj.date};
-          });
-          setEvents(result);
-      });
-  }, []);
-
-  
-
-  return (
-    <div className="RaceCalendar">
-      <div class="content p-p-4">
-        <FullCalendar 
-        events={events} 
-        eventDrop = {dropEvt}
-        eventClick = {handleDateClick}
-        initialView='dayGridMonth' 
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        headerToolbar={{ left: 'prev,next today', center: 'title', right: null }} 
-        editable selectable selectMirror dayMaxEvents />
-
-        <Dialog header="Race Card" 
-          visible={displayModal} 
-          style={{ width: '50vw' }} 
-          footer={renderFooter} 
-          onHide={onHide}>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            Ut enim </p>
-        </Dialog>
-      </div>
-    </div>
-  );
+            <form>
+                <Dialog header={isUpdate ? "Update Race" : "Add Race"} 
+                visible={displayModal} 
+                style={{ width: '50vw' }} 
+                footer={renderFooter} 
+                onHide={onHide}>
+                    <label htmlFor="racename">Race Name: </label>
+                    <InputText className="racename" value={raceName} onChange={raceNameChangeHandler} />
+                    <br />
+                    <label htmlFor="time12">Date / Time: </label>
+                    <Calendar id="time12" value={raceDate} onChange={raceDateChangeHandler} showTime hourFormat="12" />
+                    <br />
+                    Type: 
+                    <RadioButton name="ocr" value="OCR" onChange={raceTypeChangeHandler} checked={raceType === 'OCR'} />
+                    <label htmlFor="ocr">OCR</label>
+                    <RadioButton name="road" value="NML" onChange={raceTypeChangeHandler} checked={raceType === 'NML'} />
+                    <label htmlFor="road">Road</label>
+                    <br />
+                    <label htmlFor="distance">Distance:</label>
+                    <InputNumber className="racename" value={raceDistance} onValueChange={distanceChangeHandler} suffix=" mi" />
+                    <br />
+                    <label htmlFor="zip">Zip: </label>
+                    <InputText className="racename" value={raceZip} onChange={raceZipChangeHandler} />
+                </Dialog>
+            </form>
+        </div>
+        </div>
+    );
 }
 
 export default RaceCalendar;

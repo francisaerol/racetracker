@@ -11,7 +11,7 @@ function SidebarMenu() {
 
   return (
     <div className="App">
-      <div class="topbar p-shadow-2 p-p-1">
+      <div className="topbar p-shadow-2 p-p-1">
          <Button icon="pi pi-bars" className="p-button-rounded" onClick={() => setActiveSidebar(true)} />
       </div>
 
