@@ -59,8 +59,10 @@ function RaceCalendar() {
     };
 
     const handleDateClick = (args) => {
+        setCalendar(args.view.calendar); 
         resetModal();
         setIsUpdate(false);
+        setRaceDate(args.date);
         setDisplayModal(true);
     }
 
@@ -82,10 +84,52 @@ function RaceCalendar() {
     }
 
     const addEvent = () => {
+
+        //TODO: move to a DB Layer
+        let headers = new Headers();
+
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');
+
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:8080');
+        headers.append('Access-Control-Allow-Credentials', 'true');
+        headers.append('GET', 'POST', 'OPTIONS', 'PUT');
+        
+        const requestOptions = {
+            method: 'POST',
+            mode: 'cors',
+            headers: headers,
+            body: JSON.stringify({
+                "race_id": raceId,
+                "date": raceDate,
+                "distance": raceDistance,
+                "type": raceType,
+                "zip": raceZip,
+                "name": raceName
+            })
+        };
+        fetch('http://localhost:8080/racetracker/race/', requestOptions)
+        .then(response => response.json())
+        .then(data => {
+                addEventToCalendar(data);
+                resetModal(data);
+                setDisplayModal(false);
+            });
+    }
+
+    const addEventToCalendar = (data) => {
         let event = {
-            title: raceName,
-            start: "2021-11-20T05:00:00.000+00:00"
+            id: data.race_id,
+            title: data.name,
+            start: data.date,
+            extendedProps: {
+                type: data.type,
+                distance: data.distance,
+                zip: data.zip
+            }
         }
+
+        calendar.addEvent(event);
     }
 
     const updateEvent = () => {
