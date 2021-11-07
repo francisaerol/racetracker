@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import FullCalendar from '@fullcalendar/react';
+import FullCalendar, { CalendarDataProvider } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -173,6 +173,23 @@ function RaceCalendar() {
             });
     }
 
+    const deleteEvent =  (event) =>{
+        const requestOptions = {
+            method: 'DELETE',
+            mode: 'cors'
+        };
+        fetch('http://localhost:8080/racetracker/race/'+raceId, requestOptions)
+            .then((response)=> {
+                deleteEventFromCalendar(raceId);
+                setDisplayModal(false);
+            });
+    }
+
+    const deleteEventFromCalendar = (id) => {
+        let calEvent = calendar.getEventById(id);
+        calEvent.remove();
+    }
+
     const resetModal = (data) =>{
         let x = data;
         setRaceDistance(0);
@@ -207,7 +224,7 @@ function RaceCalendar() {
         if(isUpdate){
             return (
                 <div>
-                    <Button label="Delete" icon="pi pi-times" onClick={onHide} className="p-button-danger"/>
+                    <Button label="Delete" icon="pi pi-times" onClick={deleteEvent} className="p-button-danger"/>
                     <Button label="Update" icon="pi pi-check" onClick={updateEvent} autoFocus />
                 </div>
             );
