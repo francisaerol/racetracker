@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import FullCalendar, { CalendarDataProvider } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -12,6 +12,14 @@ import { Calendar } from 'primereact/calendar';
 
 import RaceService from '../service/RaceService';
 
+const usePrevious = (value) =>{
+    const ref = useRef();
+    useEffect(()=>{
+        ref.current = value;
+    }, [value]);
+    return ref.current;
+};
+
 function RaceCalendar(props) {
 
     const [displayModal, setDisplayModal] = useState(false);
@@ -21,7 +29,8 @@ function RaceCalendar(props) {
     const [raceDate, setRaceDate] = useState(null);
     const [raceName, setRaceName] = useState('');
     const [raceType, setRaceType] = useState(null);
-    const [raceDistance, setRaceDistance] = useState(0.0);
+    const [raceDistance, setRaceDistance] = useState(0);
+    const previousDistance = usePrevious(raceDistance);
     const [raceZip, setRaceZip] = useState('');
     const [raceId, setRaceId] = useState('');
 
@@ -103,6 +112,7 @@ function RaceCalendar(props) {
                     zip: data.zip
                 }
             });
+            props.calculateTarget(data.distance);
             resetModal(data);
             setDisplayModal(false);
         });
@@ -119,6 +129,8 @@ function RaceCalendar(props) {
         calEvent.setExtendedProp('distance', raceDistance);
         calEvent.setExtendedProp('zip', '20171');
 
+        props.calculateTarget(-Math.abs({previousDistance}));
+
         RaceService.updateEvent({
             "race_id": raceId,
             "date": "2021-11-20T05:00:00.000+00:00",
@@ -128,6 +140,7 @@ function RaceCalendar(props) {
             "name": raceName
         }, () => {
             resetModal();
+            props.calculateTarget(raceDistance);
             setDisplayModal(false);
         });
     }
@@ -136,6 +149,8 @@ function RaceCalendar(props) {
         RaceService.deleteEvent(raceId, ()=>{
             let calEvent = calendar.getEventById(raceId);
             calEvent.remove();
+            props.calculateTarget(-Math.abs(raceDistance));
+            resetModal();
             setDisplayModal(false);
         })      
     }

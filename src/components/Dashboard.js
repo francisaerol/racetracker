@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Knob } from 'primereact/knob';
+import { ProgressBar } from 'primereact/progressbar';
 import StravaService from '../service/StravaService';
 import RaceService from '../service/RaceService';
 
@@ -11,24 +11,46 @@ import './Dashboard.css';
 function Dashboard() {
 
     const [events, setEvents] = useState([]);
-    const [value8, setValue8] = useState(0);
-    
-    // TODO: Move this to app.js
-    useEffect(() => {
+    const [progress, setProgress] = useState(0);
+    const [totalTraining, setTotalTraining] = useState(0);
+    const [targetDistance, setTargetDistance]  = useState(0);
+
+    const calculateDashboard = (target) => {
         StravaService._reAuthorize();
         StravaService.getActivities((trainingData) => {
-            let result = trainingData.filter(training => training.type === 'Run')
-            console.log(result);
+    
+            let trainings  = trainingData.filter(training => training.type === 'Run')
+                                    .flatMap(i => i.distance)
+                                    .reduce((prevVal, curVal) => prevVal + curVal);
 
-            let totalTraining  = result.flatMap(i => i.distance).reduce((preVal, curVal)=>preVal+curVal);
-            let x  = totalTraining * 0.000621371192;
-            console.log("Total Training: "+x);
-            setValue8((x/30) * 100); // training / target miles
+            let convertedValue = (trainings * 0.000621371192).toFixed(2);
+            let percentage  = ((convertedValue/target) * 100).toFixed(2);
+        
+            setTotalTraining(convertedValue);
+            setProgress(percentage);
         });
-        RaceService.getEvents((data) => {
-            // TODO: sum all distance and use them as target distance
-            // new Date(data[4].date).getMonth()
-            let result = data.map((obj, index)=>{
+    }
+
+    const calculateTargetDistance = (newTarget) => {
+        let target = targetDistance + newTarget;
+        setTargetDistance(target);
+        calculateDashboard(target);
+    }
+
+    useEffect(() => {
+        
+        RaceService.getEvents((races) => {
+            let todaysDate = new Date();
+
+            let target = races.filter(race => new Date(race.date).getDate() > todaysDate.getDate() 
+                                        && new Date(race.date).getMonth() >= todaysDate.getMonth())
+                                        .flatMap(i => i.distance)
+                                        .reduce((prevVal, curVal) => prevVal + curVal);
+
+            setTargetDistance(target);
+            calculateDashboard(target);
+            
+            let result = races.map((obj, index)=>{
                 return {id: obj.race_id, 
                         title: obj.name,
                         start: obj.date,
@@ -49,17 +71,18 @@ function Dashboard() {
     
 
     return (
-        <div>
-            <div className='knob'>
-                <Knob value={value8} size={200} readOnly/>
+        <div className='dashboard p-d-flex'>
+            <div className='progress-bar p-mr-2'>
+                <b>Race ready percentage:</b>
+                <ProgressBar value={progress} />
+                <b>Total runs this month:</b> {totalTraining} Miles
+                <br />
+                <b>Target Distance:</b> {targetDistance} Miles
             </div>
-            <div className='race-calendar'>
-                <RaceCalendar events={events} />
+            <div className='race-calendar p-mr-2'>
+                <RaceCalendar events={events} calculateTarget={calculateTargetDistance}/>
             </div>
-            
-            
         </div>
-  
     )
 }
 
