@@ -1,5 +1,6 @@
 
 import RaceCalendar from './RaceCalendar';
+import Dashboard from './Dashboard';
 import RaceDetails from './RaceDetails';
 import {
   Switch,
@@ -9,7 +10,7 @@ import {
 function RaceRouter() {
     return (
       <Switch>
-          <Route path="/" exact component={RaceCalendar}/>
+          <Route path="/" exact component={Dashboard}/>
           <Route path="/page-1" component={RaceDetails}/>
       </Switch>
     )

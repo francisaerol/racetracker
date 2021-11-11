@@ -1,7 +1,9 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 
 import SidebarMenu from './components/SidebarMenu';
 import RaceRouter from './components/RaceRouter';
+import StravaService from  './service/StravaService';
+
 import {
   BrowserRouter as Router
 } from "react-router-dom";
@@ -12,16 +14,14 @@ import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 import './App.css';
 
-class App extends Component {
+function App(){
 
-  render() {
     return (<div className="App">
       <Router >
       <SidebarMenu />
       <RaceRouter />
       </Router>
     </div>);
-  };
 }
 
 export default App;

@@ -10,9 +10,10 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 
-function RaceCalendar() {
+import RaceService from '../service/RaceService';
 
-    const [events, setEvents] = useState([]);
+function RaceCalendar(props) {
+
     const [displayModal, setDisplayModal] = useState(false);
     const [isUpdate, setIsUpdate] = useState(false);
     const [calendar, setCalendar] = useState(null);
@@ -43,7 +44,6 @@ function RaceCalendar() {
     const raceZipChangeHandler = (event) =>{
         setRaceZip(event.target.value);
     }
-
     const dropEvt = (info) => {
         setDisplayModal(true);
         const { start, end } = info.oldEvent._instance.range;
@@ -84,52 +84,28 @@ function RaceCalendar() {
     }
 
     const addEvent = () => {
-
-        //TODO: move to a DB Layer
-        let headers = new Headers();
-
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:8080');
-        headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('GET', 'POST', 'OPTIONS', 'PUT');
-        
-        const requestOptions = {
-            method: 'POST',
-            mode: 'cors',
-            headers: headers,
-            body: JSON.stringify({
-                "race_id": raceId,
-                "date": raceDate,
-                "distance": raceDistance,
-                "type": raceType,
-                "zip": raceZip,
-                "name": raceName
-            })
-        };
-        fetch('http://localhost:8080/racetracker/race/', requestOptions)
-        .then(response => response.json())
-        .then(data => {
-                addEventToCalendar(data);
-                resetModal(data);
-                setDisplayModal(false);
+    
+        RaceService.addEvent({
+            "race_id": raceId,
+            "date": raceDate,
+            "distance": raceDistance,
+            "type": raceType,
+            "zip": raceZip,
+            "name": raceName
+        },(data)=>{
+            calendar.addEvent({
+                id: data.race_id,
+                title: data.name,
+                start: data.date,
+                extendedProps: {
+                    type: data.type,
+                    distance: data.distance,
+                    zip: data.zip
+                }
             });
-    }
-
-    const addEventToCalendar = (data) => {
-        let event = {
-            id: data.race_id,
-            title: data.name,
-            start: data.date,
-            extendedProps: {
-                type: data.type,
-                distance: data.distance,
-                zip: data.zip
-            }
-        }
-
-        calendar.addEvent(event);
+            resetModal(data);
+            setDisplayModal(false);
+        });
     }
 
     const updateEvent = () => {
@@ -143,51 +119,25 @@ function RaceCalendar() {
         calEvent.setExtendedProp('distance', raceDistance);
         calEvent.setExtendedProp('zip', '20171');
 
-        //TODO: move to a DB Layer
-        let headers = new Headers();
-
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-    
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:8080');
-        headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('GET', 'POST', 'OPTIONS', 'PUT');
-        
-        const requestOptions = {
-            method: 'PUT',
-            mode: 'cors',
-            headers: headers,
-            body: JSON.stringify({
-                "race_id": raceId,
-                "date": "2021-11-20T05:00:00.000+00:00",
-                "distance": raceDistance,
-                "type": raceType,
-                "zip": raceZip,
-                "name": raceName
-            })
-        };
-        fetch('http://localhost:8080/racetracker/race/'+raceId, requestOptions)
-            .then((response)=> {
-                resetModal(response);
-                setDisplayModal(false);
-            });
+        RaceService.updateEvent({
+            "race_id": raceId,
+            "date": "2021-11-20T05:00:00.000+00:00",
+            "distance": raceDistance,
+            "type": raceType,
+            "zip": raceZip,
+            "name": raceName
+        }, () => {
+            resetModal();
+            setDisplayModal(false);
+        });
     }
 
-    const deleteEvent =  (event) =>{
-        const requestOptions = {
-            method: 'DELETE',
-            mode: 'cors'
-        };
-        fetch('http://localhost:8080/racetracker/race/'+raceId, requestOptions)
-            .then((response)=> {
-                deleteEventFromCalendar(raceId);
-                setDisplayModal(false);
-            });
-    }
-
-    const deleteEventFromCalendar = (id) => {
-        let calEvent = calendar.getEventById(id);
-        calEvent.remove();
+    const deleteEventFromCalendar = () => {
+        RaceService.deleteEvent(raceId, ()=>{
+            let calEvent = calendar.getEventById(raceId);
+            calEvent.remove();
+            setDisplayModal(false);
+        })      
     }
 
     const resetModal = (data) =>{
@@ -199,32 +149,11 @@ function RaceCalendar() {
         setRaceZip('');
     }
 
-    useEffect(() => {
-
-        // TODO: move to DB Layer
-
-        fetch('http://localhost:8080/racetracker/races')
-        .then(response => response.json())
-        .then((data) => {
-            let result = data.map((obj, index)=>{
-                return {id: obj.race_id, 
-                    title: obj.name,
-                    start: obj.date,
-                    extendedProps: {
-                        type: obj.type,
-                        distance: obj.distance,
-                        zip: obj.zip
-                    }};
-            });
-            setEvents(result);
-        });
-    }, []);
-
     const renderFooter = () => {
         if(isUpdate){
             return (
                 <div>
-                    <Button label="Delete" icon="pi pi-times" onClick={deleteEvent} className="p-button-danger"/>
+                    <Button label="Delete" icon="pi pi-times" onClick={deleteEventFromCalendar} className="p-button-danger"/>
                     <Button label="Update" icon="pi pi-check" onClick={updateEvent} autoFocus />
                 </div>
             );
@@ -240,7 +169,7 @@ function RaceCalendar() {
         <div className="RaceCalendar">
         <div className="content p-p-4">
             <FullCalendar 
-            events={events} 
+            events={props.events} 
             eventDrop = {dropEvt}
             eventClick = {handleEventClick}
             dateClick = {handleDateClick}
