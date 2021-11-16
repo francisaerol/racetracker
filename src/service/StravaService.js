@@ -1,9 +1,7 @@
 import { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, ACCESS_TOKEN } from './auth.json'
 
-const AUTH_LINK = "https://www.strava.com/oauth/token";
+const AUTH_LINK = 'https://www.strava.com/oauth/token';
 const API_LINK = 'https://www.strava.com/api/v3';
-// TODO: Have this  in a config file that will be read
-
 
 class StravaService {
 
@@ -19,7 +17,7 @@ class StravaService {
             today.setDate(1);
             console.log();
     
-            fetch(API_LINK + '/athlete/activities?'+'access_token='+this._accessToken+'&after=1633825925', {
+            fetch(API_LINK + '/athlete/activities?access_token='+this._accessToken+'&after=1633825925', {
                     method: 'GET',
                     headers: headers
                 })

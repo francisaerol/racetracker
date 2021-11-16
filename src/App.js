@@ -1,8 +1,5 @@
-import React, { useEffect } from 'react';
-
 import SidebarMenu from './components/SidebarMenu';
 import RaceRouter from './components/RaceRouter';
-import StravaService from  './service/StravaService';
 
 import {
   BrowserRouter as Router

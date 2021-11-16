@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import FullCalendar, { CalendarDataProvider } from '@fullcalendar/react';
+
+import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -9,6 +10,7 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
+import { Knob } from 'primereact/knob';
 
 import RaceService from '../service/RaceService';
 import WeatherService from '../service/WeatherService';
@@ -35,6 +37,8 @@ function RaceCalendar(props) {
     const [raceZip, setRaceZip] = useState('');
     const [raceId, setRaceId] = useState('');
     const [raceLink, setRaceLink] = useState('');
+    const [raceWeather, setRaceweather] = useState (0);
+    const [raceReady, setReadinness] = useState(0);
 
     const  raceDateChangeHandler = (event) => {
         setRaceDate(event.value);
@@ -60,6 +64,7 @@ function RaceCalendar(props) {
         setRaceLink(event.target.value);
     }
 
+    // TODO: Fix this drag & drop
     const dropEvt = (info) => {
         setDisplayModal(true);
         const { start, end } = info.oldEvent._instance.range;
@@ -85,7 +90,8 @@ function RaceCalendar(props) {
     const handleEventClick =(args) => {
         let info = args.event;
         WeatherService.getWeather(info.extendedProps.zip)
-        .then(() =>{
+        .then((data) => {
+            setRaceweather(data.list[0].main.temp);
             setCalendar(args.view.calendar); 
             setIsUpdate(true);
             setDisplayModal(true);
@@ -95,7 +101,8 @@ function RaceCalendar(props) {
             setRaceDate(info.start);
             setRaceDistance(info.extendedProps.distance);
             setRaceZip(info.extendedProps.zip);
-            setRaceLink(info.extendedProps.race_link)
+            setRaceLink(info.extendedProps.race_link);
+            computeReadiness(info.extendedProps.distance);
         });
     }
 
@@ -106,13 +113,13 @@ function RaceCalendar(props) {
     const addEvent = () => {
     
         RaceService.addEvent({
-            "race_id": raceId,
-            "date": raceDate,
-            "distance": raceDistance,
-            "type": raceType,
-            "zip": raceZip,
-            "name": raceName,
-            "race_link": raceLink
+            'race_id': raceId,
+            'date': raceDate,
+            'distance': raceDistance,
+            'type': raceType,
+            'zip': raceZip,
+            'name': raceName,
+            'race_link': raceLink
         },(data)=>{
             calendar.addEvent({
                 id: data.race_id,
@@ -150,13 +157,13 @@ function RaceCalendar(props) {
         }
 
         RaceService.updateEvent({
-            "race_id": raceId,
-            "date": raceDate,
-            "distance": raceDistance,
-            "type": raceType,
-            "zip": raceZip,
-            "name": raceName,
-            "race_link": raceLink
+            'race_id': raceId,
+            'date': raceDate,
+            'distance': raceDistance,
+            'type': raceType,
+            'zip': raceZip,
+            'name': raceName,
+            'race_link': raceLink
         }, () => {
             setDisplayModal(false);
         });
@@ -172,13 +179,19 @@ function RaceCalendar(props) {
         })      
     }
 
+    const computeReadiness = (distance)=> {
+        let totalTraining  =  parseFloat(props.totalTraining);
+        let percentage = (totalTraining >= distance) ? 100 :  parseFloat(((totalTraining/distance) * 100).toFixed(2));
+        setReadinness(percentage);
+    }
+
     const resetModal = (data) =>{
-        let x = data;
         setRaceDistance(0);
         setRaceId('');
         setRaceName('');
         setRaceType('');
         setRaceZip('');
+        setRaceLink('');
     }
 
     const openLink = () =>{
@@ -189,21 +202,21 @@ function RaceCalendar(props) {
         if(isUpdate){
             return (
                 <div>
-                    <Button label="Delete" icon="pi pi-times" onClick={deleteEventFromCalendar} className="p-button-danger"/>
-                    <Button label="Update" icon="pi pi-check" onClick={updateEvent} autoFocus />
+                    <Button label='Delete' icon='pi pi-times' onClick={deleteEventFromCalendar} className='p-button-danger'/>
+                    <Button label='Update' icon='pi pi-check' onClick={updateEvent} autoFocus />
                 </div>
             );
         } 
         return (
             <div>
-                <Button label="Add" className="p-button-success" icon="pi pi-check" onClick={addEvent} autoFocus />
+                <Button label='Add' className='p-button-success' icon='pi pi-check' onClick={addEvent} autoFocus />
             </div>
         );
     }
 
     return (
-        <div className="RaceCalendar">
-        <div className="content p-p-4">
+        <div className='RaceCalendar'>
+        <div className='content p-p-4'>
             <FullCalendar 
             events={props.events} 
             eventDrop = {dropEvt}
@@ -215,33 +228,41 @@ function RaceCalendar(props) {
             editable selectable selectMirror dayMaxEvents />
 
             <form>
-                <Dialog header={isUpdate ? "Update Race" : "Add Race"} 
+                <Dialog header={isUpdate ? 'Update Race' : 'Add Race'} 
                 visible={displayModal} 
                 style={{ width: '50vw' }} 
                 footer={renderFooter} 
                 onHide={onHide}>
-                    <label htmlFor="racename">Race Name: </label>
-                    <InputText className="racename" value={raceName} onChange={raceNameChangeHandler} />
-                    <br />
-                    <label htmlFor="time12">Date / Time: </label>
-                    <Calendar id="time12" value={raceDate} onChange={raceDateChangeHandler} showTime hourFormat="12" />
-                    <br />
-                    Type: 
-                    <RadioButton name="ocr" value="OCR" onChange={raceTypeChangeHandler} checked={raceType === 'OCR'} />
-                    <label htmlFor="ocr">OCR</label>
-                    <RadioButton name="road" value="NML" onChange={raceTypeChangeHandler} checked={raceType === 'NML'} />
-                    <label htmlFor="road">Road</label>
-                    <br />
-                    <label htmlFor="distance">Distance:</label>
-                    <InputNumber className="racename" value={raceDistance} onValueChange={distanceChangeHandler} suffix=" mi" />
-                    <br />
-                    <label htmlFor="zip">Zip: </label>
-                    <InputText className="racename" value={raceZip} onChange={raceZipChangeHandler} />
-                    <br />
-                    <label htmlFor="raceLink">Link: </label>
-                    <InputText className="raceLink" value={raceLink} onChange={raceLinkChangeHandler} />
-                    {raceLink  && raceLink.length > 1 ? <Button icon="pi pi-globe" onClick={openLink} className="p-button-rounded p-button-info p-button-outlined" /> :null}
-                </Dialog>
+                    <div className="p-grid">
+                        <div className="p-col">
+                            <label htmlFor='racename'>Race Name: </label>
+                            <InputText className='racename' value={raceName} onChange={raceNameChangeHandler} />
+                            <br />
+                            <label htmlFor='time12'>Date / Time: </label>
+                            <Calendar id='time12' value={raceDate} onChange={raceDateChangeHandler} showTime hourFormat='12' />
+                            <br />
+                            Type: 
+                            <RadioButton name='ocr' value='OCR' onChange={raceTypeChangeHandler} checked={raceType === 'OCR'} />
+                            <label htmlFor='ocr'>OCR</label>
+                            <RadioButton name='road' value='NML' onChange={raceTypeChangeHandler} checked={raceType === 'NML'} />
+                            <label htmlFor='road'>Road</label>
+                            <br />
+                            <label htmlFor='distance'>Distance:</label>
+                            <InputNumber className='racename' value={raceDistance} onValueChange={distanceChangeHandler} suffix=' mi' />
+                            <br />
+                            <label htmlFor='zip'>Zip: </label>
+                            <InputText className='racename' value={raceZip} onChange={raceZipChangeHandler} />
+                            <h3><b>Weather:</b>{raceWeather}</h3>
+                            <br />
+                            <label htmlFor='raceLink'>Link: </label>
+                            <InputText className='raceLink' value={raceLink} onChange={raceLinkChangeHandler} />
+                            {raceLink  && raceLink.length > 1 ? <Button icon='pi pi-globe' onClick={openLink} className='p-button-rounded p-button-info p-button-outlined' /> :null}
+                        </div>
+                        <div className="p-col">
+                            <Knob value={raceReady} suffix=' %' readyOnly/>
+                        </div>
+                    </div>
+                   </Dialog>
             </form>
         </div>
         </div>

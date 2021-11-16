@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ProgressBar } from 'primereact/progressbar';
+
 import StravaService from '../service/StravaService';
 import RaceService from '../service/RaceService';
-
 import RaceCalendar from './RaceCalendar';
 
 import 'primeflex/primeflex.css';
@@ -78,7 +78,7 @@ function Dashboard() {
                 <b>Target Distance:</b> {targetDistance} Miles
             </div>
             <div className='race-calendar p-mr-2'>
-                <RaceCalendar events={events} calculateTarget={calculateTargetDistance}/>
+                <RaceCalendar events={events} totalTraining={totalTraining} calculateTarget={calculateTargetDistance}/>
             </div>
         </div>
     )
