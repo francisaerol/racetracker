@@ -11,6 +11,7 @@ import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 
 import RaceService from '../service/RaceService';
+import WeatherService from '../service/WeatherService';
 
 const usePrevious = (value) =>{
     const ref = useRef();
@@ -83,16 +84,19 @@ function RaceCalendar(props) {
 
     const handleEventClick =(args) => {
         let info = args.event;
-        setCalendar(args.view.calendar); 
-        setIsUpdate(true);
-        setDisplayModal(true);
-        setRaceName(info.title);
-        setRaceId(info.id);
-        setRaceType(info.extendedProps.type);
-        setRaceDate(info.start);
-        setRaceDistance(info.extendedProps.distance);
-        setRaceZip(info.extendedProps.zip);
-        setRaceLink(info.extendedProps.race_link)
+        WeatherService.getWeather(info.extendedProps.zip)
+        .then(() =>{
+            setCalendar(args.view.calendar); 
+            setIsUpdate(true);
+            setDisplayModal(true);
+            setRaceName(info.title);
+            setRaceId(info.id);
+            setRaceType(info.extendedProps.type);
+            setRaceDate(info.start);
+            setRaceDistance(info.extendedProps.distance);
+            setRaceZip(info.extendedProps.zip);
+            setRaceLink(info.extendedProps.race_link)
+        });
     }
 
     const onHide = () => {

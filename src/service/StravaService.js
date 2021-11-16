@@ -14,6 +14,10 @@ class StravaService {
             let headers = new Headers();
             headers.append('Content-Type', 'application/json');
             headers.append('Accept', 'application/json');
+
+            let today = new Date();
+            today.setDate(1);
+            console.log();
     
             fetch(API_LINK + '/athlete/activities?'+'access_token='+this._accessToken+'&after=1633825925', {
                     method: 'GET',
