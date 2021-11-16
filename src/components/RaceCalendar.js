@@ -33,6 +33,7 @@ function RaceCalendar(props) {
     const previousDistance = usePrevious(raceDistance);
     const [raceZip, setRaceZip] = useState('');
     const [raceId, setRaceId] = useState('');
+    const [raceLink, setRaceLink] = useState('');
 
     const  raceDateChangeHandler = (event) => {
         setRaceDate(event.value);
@@ -53,6 +54,11 @@ function RaceCalendar(props) {
     const raceZipChangeHandler = (event) =>{
         setRaceZip(event.target.value);
     }
+
+    const raceLinkChangeHandler =  (event) => {
+        setRaceLink(event.target.value);
+    }
+
     const dropEvt = (info) => {
         setDisplayModal(true);
         const { start, end } = info.oldEvent._instance.range;
@@ -86,6 +92,7 @@ function RaceCalendar(props) {
         setRaceDate(info.start);
         setRaceDistance(info.extendedProps.distance);
         setRaceZip(info.extendedProps.zip);
+        setRaceLink(info.extendedProps.race_link)
     }
 
     const onHide = () => {
@@ -100,7 +107,8 @@ function RaceCalendar(props) {
             "distance": raceDistance,
             "type": raceType,
             "zip": raceZip,
-            "name": raceName
+            "name": raceName,
+            "race_link": raceLink
         },(data)=>{
             calendar.addEvent({
                 id: data.race_id,
@@ -109,7 +117,8 @@ function RaceCalendar(props) {
                 extendedProps: {
                     type: data.type,
                     distance: data.distance,
-                    zip: data.zip
+                    zip: data.zip,
+                    race_link: data.race_link
                 }
             });
             props.calculateTarget(data.distance);
@@ -125,22 +134,26 @@ function RaceCalendar(props) {
         let calEvent = calendar.getEventById(raceId);
         calEvent.setProp('title', raceName);
         calEvent.setStart(raceDate);
+        calEvent.setEnd(raceDate);
         calEvent.setExtendedProp('type', raceType);
         calEvent.setExtendedProp('distance', raceDistance);
         calEvent.setExtendedProp('zip', '20171');
+        calEvent.setExtendedProp('race_link', raceLink);
 
-        props.calculateTarget(-Math.abs({previousDistance}));
+        if(previousDistance !== raceDistance){
+            let newDistance = -Math.abs(previousDistance) + raceDistance;
+            props.calculateTarget(newDistance);
+        }
 
         RaceService.updateEvent({
             "race_id": raceId,
-            "date": "2021-11-20T05:00:00.000+00:00",
+            "date": raceDate,
             "distance": raceDistance,
             "type": raceType,
             "zip": raceZip,
-            "name": raceName
+            "name": raceName,
+            "race_link": raceLink
         }, () => {
-            resetModal();
-            props.calculateTarget(raceDistance);
             setDisplayModal(false);
         });
     }
@@ -162,6 +175,10 @@ function RaceCalendar(props) {
         setRaceName('');
         setRaceType('');
         setRaceZip('');
+    }
+
+    const openLink = () =>{
+        window.open(raceLink, '_blank');
     }
 
     const renderFooter = () => {
@@ -216,6 +233,10 @@ function RaceCalendar(props) {
                     <br />
                     <label htmlFor="zip">Zip: </label>
                     <InputText className="racename" value={raceZip} onChange={raceZipChangeHandler} />
+                    <br />
+                    <label htmlFor="raceLink">Link: </label>
+                    <InputText className="raceLink" value={raceLink} onChange={raceLinkChangeHandler} />
+                    {raceLink  && raceLink.length > 1 ? <Button icon="pi pi-globe" onClick={openLink} className="p-button-rounded p-button-info p-button-outlined" /> :null}
                 </Dialog>
             </form>
         </div>

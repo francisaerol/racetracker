@@ -12,3 +12,8 @@ html {
   height: 50px;
   background-color: var(--surface-300);
 }
+
+.leaflet-container {
+  width: 700px;
+  height: 500px;
+}

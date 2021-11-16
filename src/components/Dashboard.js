@@ -16,7 +16,6 @@ function Dashboard() {
     const [targetDistance, setTargetDistance]  = useState(0);
 
     const calculateDashboard = (target) => {
-        StravaService._reAuthorize();
         StravaService.getActivities((trainingData) => {
     
             let trainings  = trainingData.filter(training => training.type === 'Run')
@@ -57,12 +56,11 @@ function Dashboard() {
                         extendedProps: {
                             type: obj.type,
                             distance: obj.distance,
-                            zip: obj.zip
+                            zip: obj.zip,
+                            race_link: obj.race_link
                         }
                     };
             });
-
-            // TODO: Get all upcoming races miles
 
             setEvents(result);
         });

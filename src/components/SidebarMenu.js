@@ -19,10 +19,10 @@ function SidebarMenu() {
         <div>
         <ul>
           <li>
-            <Link to="/">Home</Link>
+            <Link to="/">Dashboard</Link>
           </li>
           <li>
-            <Link to="/page-1">About</Link>
+            <Link to="/run-map">Run Maps</Link>
           </li>
         </ul>
         </div>

@@ -1,7 +1,8 @@
 
-import RaceCalendar from './RaceCalendar';
 import Dashboard from './Dashboard';
-import RaceDetails from './RaceDetails';
+import TrainingMap from './TrainingMap';
+
+
 import {
   Switch,
   Route
@@ -11,7 +12,7 @@ function RaceRouter() {
     return (
       <Switch>
           <Route path="/" exact component={Dashboard}/>
-          <Route path="/page-1" component={RaceDetails}/>
+          <Route path="/run-map" component={TrainingMap}/>
       </Switch>
     )
 }

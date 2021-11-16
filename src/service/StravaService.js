@@ -10,26 +10,24 @@ class StravaService {
     static _accessToken = ACCESS_TOKEN;
 
     static getActivities= (getCB) =>{
-        let headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-
-        let params = {
-            access_token: this._accessToken,
-            after: '1633825925'
-        }
-      //"c754832d527328066c71918bbb6104de5ea7b0ce"
-        fetch(API_LINK + '/athlete/activities?'+'access_token=c754832d527328066c71918bbb6104de5ea7b0ce&after=1633825925', {
-                method: 'GET',
-                headers: headers
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                getCB(data);
-            })
+        this._reAuthorize(()=>{
+            let headers = new Headers();
+            headers.append('Content-Type', 'application/json');
+            headers.append('Accept', 'application/json');
+    
+            fetch(API_LINK + '/athlete/activities?'+'access_token='+this._accessToken+'&after=1633825925', {
+                    method: 'GET',
+                    headers: headers
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    getCB(data);
+                })
+        });
+       
     };
 
-    static _reAuthorize = () => {
+    static _reAuthorize = (cb) => {
         let headers = new Headers();
         headers.append('Content-Type', 'application/json');
         headers.append('Accept', 'application/json');
@@ -44,12 +42,13 @@ class StravaService {
             })
         }).then((response) => response.json())
         .then((data) => {
+
             this._accessToken = data.access_token;
+            cb();
             console.dir(data);
             console.log('reauthorized');
         });
     }
 }
-
 
 export default StravaService;
