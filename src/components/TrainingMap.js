@@ -19,6 +19,17 @@ function TrainingMap() {
     
     },[]);
 
+    const getRandomColor=()=> {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        console.log(color);
+        return color;
+    }
+      
+
     return (
         <div className='race-map'>
         <MapContainer center={[38.98372,-77.38276]} zoom={12} scrollWheelZoom={false}>
@@ -26,7 +37,10 @@ function TrainingMap() {
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Polyline className='polyline-marker' positions={routes} />
+            {routes.map((route, index)=>{
+               return <Polyline  key={index} style={{color: String(getRandomColor())}} positions={route} />
+            })}
+            
         </MapContainer>
         </div>
         
