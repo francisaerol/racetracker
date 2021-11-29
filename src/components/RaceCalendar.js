@@ -27,6 +27,7 @@ function RaceCalendar(props) {
 
     const [displayModal, setDisplayModal] = useState(false);
     const [isUpdate, setIsUpdate] = useState(false);
+    const [isReadOnly, setIsReadyOnly] = useState(false);
     const [calendar, setCalendar] = useState(null);
 
     const [raceDate, setRaceDate] = useState(null);
@@ -80,20 +81,26 @@ function RaceCalendar(props) {
     };
 
     const handleDateClick = (args) => {
+        setIsUpdate(false);
         setCalendar(args.view.calendar); 
         resetModal();
-        setIsUpdate(false);
         setRaceDate(args.date);
         setDisplayModal(true);
     }
 
     const handleEventClick =(args) => {
         let info = args.event;
+        let todaysDate = new Date();
+        let eventDate = new Date(info.start);
+        if(eventDate.getTime() < todaysDate.getTime()){
+            setIsReadyOnly(true);
+        } else  {
+            setIsUpdate(true);
+        }
         WeatherService.getWeather(info.extendedProps.zip)
         .then((data) => {
             setRaceweather(data.list[0].main.temp);
             setCalendar(args.view.calendar); 
-            setIsUpdate(true);
             setDisplayModal(true);
             setRaceName(info.title);
             setRaceId(info.id);
@@ -107,6 +114,7 @@ function RaceCalendar(props) {
     }
 
     const onHide = () => {
+        setIsReadyOnly(false);
         setDisplayModal(false);
     }
 
@@ -148,7 +156,7 @@ function RaceCalendar(props) {
         calEvent.setEnd(raceDate);
         calEvent.setExtendedProp('type', raceType);
         calEvent.setExtendedProp('distance', raceDistance);
-        calEvent.setExtendedProp('zip', '20171');
+        calEvent.setExtendedProp('zip', raceZip);
         calEvent.setExtendedProp('race_link', raceLink);
 
         if(previousDistance !== raceDistance){
@@ -192,6 +200,9 @@ function RaceCalendar(props) {
         setRaceType('');
         setRaceZip('');
         setRaceLink('');
+        setRaceweather(0);
+        setReadinness(0);
+
     }
 
     const openLink = () =>{
@@ -199,6 +210,11 @@ function RaceCalendar(props) {
     }
 
     const renderFooter = () => {
+        if(isReadOnly){
+            return(
+                <div></div>
+            );
+        }
         if(isUpdate){
             return (
                 <div>
@@ -213,12 +229,23 @@ function RaceCalendar(props) {
             </div>
         );
     }
+    
+    const renderHeader = () =>{
+        let header = 'Add Race';
+        if(isReadOnly){
+            header = 'Race is Finished';
+        } else if (isUpdate) {
+            header = 'Update Race';
+        } 
+        return header;
+    }
 
     return (
         <div className='RaceCalendar'>
         <div className='content p-p-4'>
             <FullCalendar 
             events={props.events} 
+            defaultAllDay={true}
             eventDrop = {dropEvt}
             eventClick = {handleEventClick}
             dateClick = {handleDateClick}
@@ -228,7 +255,7 @@ function RaceCalendar(props) {
             editable selectable selectMirror dayMaxEvents />
 
             <form>
-                <Dialog header={isUpdate ? 'Update Race' : 'Add Race'} 
+                <Dialog header={renderHeader} 
                 visible={displayModal} 
                 style={{ width: '50vw' }} 
                 footer={renderFooter} 
@@ -236,26 +263,26 @@ function RaceCalendar(props) {
                     <div className="p-grid">
                         <div className="p-col">
                             <label htmlFor='racename'>Race Name: </label>
-                            <InputText className='racename' value={raceName} onChange={raceNameChangeHandler} />
+                            <InputText className='racename' value={raceName} onChange={raceNameChangeHandler} disabled={isReadOnly}/>
                             <br />
                             <label htmlFor='time12'>Date / Time: </label>
-                            <Calendar id='time12' value={raceDate} onChange={raceDateChangeHandler} showTime hourFormat='12' />
+                            <Calendar id='time12' value={raceDate} onChange={raceDateChangeHandler} disabled={isReadOnly} showTime hourFormat='12' />
                             <br />
                             Type: 
-                            <RadioButton name='ocr' value='OCR' onChange={raceTypeChangeHandler} checked={raceType === 'OCR'} />
+                            <RadioButton name='ocr' value='OCR' onChange={raceTypeChangeHandler} disabled={isReadOnly} checked={raceType === 'OCR'} />
                             <label htmlFor='ocr'>OCR</label>
-                            <RadioButton name='road' value='NML' onChange={raceTypeChangeHandler} checked={raceType === 'NML'} />
+                            <RadioButton name='road' value='NML' onChange={raceTypeChangeHandler} disabled={isReadOnly} checked={raceType === 'NML'} />
                             <label htmlFor='road'>Road</label>
                             <br />
                             <label htmlFor='distance'>Distance:</label>
-                            <InputNumber className='racename' value={raceDistance} onValueChange={distanceChangeHandler} suffix=' mi' />
+                            <InputNumber mode="decimal" className='racename' value={raceDistance} disabled={isReadOnly} onValueChange={distanceChangeHandler} suffix=' mi' />
                             <br />
                             <label htmlFor='zip'>Zip: </label>
-                            <InputText className='racename' value={raceZip} onChange={raceZipChangeHandler} />
+                            <InputText className='racename' value={raceZip} disabled={isReadOnly} onChange={raceZipChangeHandler} />
                             <h3><b>Weather:</b>{raceWeather}</h3>
                             <br />
                             <label htmlFor='raceLink'>Link: </label>
-                            <InputText className='raceLink' value={raceLink} onChange={raceLinkChangeHandler} />
+                            <InputText className='raceLink' value={raceLink}  disabled={isReadOnly} onChange={raceLinkChangeHandler} />
                             {raceLink  && raceLink.length > 1 ? <Button icon='pi pi-globe' onClick={openLink} className='p-button-rounded p-button-info p-button-outlined' /> :null}
                         </div>
                         <div className="p-col">

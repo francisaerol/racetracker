@@ -1,54 +1,58 @@
-import { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, ACCESS_TOKEN } from './auth.json'
+import { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } from './auth.json'
 
 const AUTH_LINK = 'https://www.strava.com/oauth/token';
 const API_LINK = 'https://www.strava.com/api/v3';
 
 class StravaService {
 
-    static _accessToken = ACCESS_TOKEN;
+    static get headers() {
+        let headers  = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');    
+        return headers;
+    }
 
-    static getActivities= (getCB) =>{
-        this._reAuthorize(()=>{
-            let headers = new Headers();
-            headers.append('Content-Type', 'application/json');
-            headers.append('Accept', 'application/json');
+    static getActivities = () =>  {
+        let promise = new Promise((resolve, reject) => {
+            let startDate = new Date();
+            startDate.setDate(1);
+            startDate.setHours(0,0,0);
+         
+            let endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1,  1);
+            
+            // Convert to unix epoch
+            startDate =  Math.ceil(startDate.getTime() / 1000);
+            endDate = Math.ceil(endDate.getTime() / 1000);
 
-            let today = new Date();
-            today.setDate(1);
-    
-            fetch(API_LINK + '/athlete/activities?access_token='+this._accessToken+'&after='+today.getTime(), {
+            this._reauthorization().then(access_token => {
+                fetch(API_LINK + '/athlete/activities?access_token='+access_token+'&after='+startDate+'&before='+endDate, {
                     method: 'GET',
-                    headers: headers
+                    headers: this.headers
                 })
                 .then((response) => response.json())
-                .then((data) => {
-                    getCB(data);
-                })
+                .then((data) => resolve(data));
+            })
         });
-       
-    };
+       return promise;
+    }
 
-    static _reAuthorize = (cb) => {
-        let headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-        fetch(AUTH_LINK, {
+    static _reauthorization = () => {
+        let params =  {
             method: 'POST',
-            headers:  headers,
+            headers:  this.headers,
             body: JSON.stringify({
                 client_id: CLIENT_ID,
                 client_secret: CLIENT_SECRET,
                 refresh_token:  REFRESH_TOKEN,
                 grant_type: 'refresh_token'
             })
-        }).then((response) => response.json())
-        .then((data) => {
-
-            this._accessToken = data.access_token;
-            cb();
-            console.dir(data);
-            console.log('reauthorized');
+        };
+        let promise  = new Promise((resolve, reject) => {
+            fetch(AUTH_LINK, params)
+            .then(response => response.json())
+            .then(data => resolve(data.access_token));
         });
+        return promise;
     }
 }
 

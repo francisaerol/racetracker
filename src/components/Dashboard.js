@@ -16,17 +16,21 @@ function Dashboard() {
     const [targetDistance, setTargetDistance]  = useState(0);
 
     const calculateDashboard = (target) => {
-        StravaService.getActivities((trainingData) => {
-    
-            let trainings  = trainingData.filter(training => training.type === 'Run')
-                                    .flatMap(i => i.distance)
-                                    .reduce((prevVal, curVal) => prevVal + curVal);
+
+        StravaService.getActivities().then(trainingData => {
+            let trainings = trainingData.filter(training => training.type === 'Run')
+                .flatMap(i => i.distance)
+                .reduce((prevVal, curVal) => prevVal + curVal);
 
             let convertedValue = (trainings * 0.000621371192).toFixed(2);
-            let percentage  = ((convertedValue/target) * 100).toFixed(2);
-        
             setTotalTraining(convertedValue);
-            setProgress(percentage);
+
+            if (target.length > 0) {
+                let percentage = ((convertedValue / target) * 100).toFixed(2);
+                setProgress(percentage);
+            } else {
+                setProgress(0);
+            }
         });
     }
 
@@ -42,10 +46,9 @@ function Dashboard() {
             let todaysDate = new Date();
 
             let target = races.filter(race => new Date(race.date).getDate() > todaysDate.getDate() 
-                                        && new Date(race.date).getMonth() >= todaysDate.getMonth())
-                                        .flatMap(i => i.distance)
-                                        .reduce((prevVal, curVal) => prevVal + curVal);
-
+                    && new Date(race.date).getMonth() >= todaysDate.getMonth()).flatMap(i => i.distance)
+                    .reduce((prevVal, curVal) => prevVal + curVal,0);
+                                
             setTargetDistance(target);
             calculateDashboard(target);
             
@@ -67,7 +70,6 @@ function Dashboard() {
         
     }, []);
     
-
     return (
         <div className='dashboard p-d-flex'>
             <div className='progress-bar p-mr-2'>
@@ -75,7 +77,7 @@ function Dashboard() {
                 <ProgressBar value={progress} />
                 <b>Total runs this month:</b> {totalTraining} Miles
                 <br />
-                <b>Target Distance:</b> {targetDistance} Miles
+                <b>Total target distance:</b> {targetDistance} Miles
             </div>
             <div className='race-calendar p-mr-2'>
                 <RaceCalendar events={events} totalTraining={totalTraining} calculateTarget={calculateTargetDistance}/>
