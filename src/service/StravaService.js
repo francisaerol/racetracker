@@ -12,9 +12,9 @@ class StravaService {
         return headers;
     }
 
-    static getActivities = () =>  {
+    static getActivities = (startMonth) =>  {
         let promise = new Promise((resolve, reject) => {
-            let startDate = new Date();
+            let startDate = (startMonth ? new Date(startMonth) : new Date());
             startDate.setDate(1);
             startDate.setHours(0,0,0);
          
