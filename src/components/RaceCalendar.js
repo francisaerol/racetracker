@@ -11,6 +11,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { Knob } from 'primereact/knob';
+import { Toast } from 'primereact/toast';
 
 import RaceService from '../service/RaceService';
 import WeatherService from '../service/WeatherService';
@@ -27,7 +28,7 @@ function RaceCalendar(props) {
 
     const [displayModal, setDisplayModal] = useState(false);
     const [isUpdate, setIsUpdate] = useState(false);
-    const [isReadOnly, setIsReadyOnly] = useState(false);
+    const [isReadOnly, setIsReadOnly] = useState(false);
     const [calendar, setCalendar] = useState(null);
 
     const [raceDate, setRaceDate] = useState(null);
@@ -40,6 +41,7 @@ function RaceCalendar(props) {
     const [raceLink, setRaceLink] = useState('');
     const [raceWeather, setRaceweather] = useState (0);
     const [raceReady, setReadinness] = useState(0);
+    const toast = useRef(null);
 
     const  raceDateChangeHandler = (event) => {
         setRaceDate(event.value);
@@ -81,11 +83,21 @@ function RaceCalendar(props) {
     };
 
     const handleDateClick = (args) => {
-        setIsUpdate(false);
-        setCalendar(args.view.calendar); 
-        resetModal();
-        setRaceDate(args.date);
-        setDisplayModal(true);
+        let todaysDate = new Date();
+        if (args.date.getTime() < todaysDate.getTime()) {
+            toast.current.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Date is in the past',
+                life: 2000
+            });
+        } else {
+            setIsUpdate(false);
+            setCalendar(args.view.calendar);
+            resetModal();
+            setRaceDate(args.date);
+            setDisplayModal(true);
+        }
     }
 
     const handleEventClick =(args) => {
@@ -93,10 +105,11 @@ function RaceCalendar(props) {
         let todaysDate = new Date();
         let eventDate = new Date(info.start);
         if(eventDate.getTime() < todaysDate.getTime()){
-            setIsReadyOnly(true);
+            setIsReadOnly(true);
         } else  {
             setIsUpdate(true);
         }
+
         WeatherService.getWeather(info.extendedProps.zip)
         .then((data) => {
             setRaceweather(data.list[0].main.temp);
@@ -114,7 +127,7 @@ function RaceCalendar(props) {
     }
 
     const onHide = () => {
-        setIsReadyOnly(false);
+        setIsReadOnly(false);
         setDisplayModal(false);
     }
 
@@ -242,6 +255,7 @@ function RaceCalendar(props) {
 
     return (
         <div className='RaceCalendar'>
+        <Toast ref={toast} />
         <div className='content p-p-4'>
             <FullCalendar 
             events={props.events} 

@@ -25,7 +25,7 @@ function Dashboard() {
             let convertedValue = (trainings * 0.000621371192).toFixed(2);
             setTotalTraining(convertedValue);
 
-            if (target.length > 0) {
+            if (target > 0) {
                 let percentage = ((convertedValue / target) * 100).toFixed(2);
                 setProgress(percentage);
             } else {
