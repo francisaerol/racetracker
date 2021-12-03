@@ -1,11 +1,30 @@
-.race-map{
-
-}
-
-.dash{
-    width: 350px;
+.route-link:hover{
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .race-color {
     color:  red;
+}
+
+#outer-container {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+
+#sidebar {
+	display: table-cell;
+	width: 20%;
+	vertical-align: top;
+    padding-left: 20px;
+    padding-top: 30px;
+    padding-right:20px;
+}
+
+#content {
+    padding-top: 30px;
+	display: table-cell;
+	width: 80%;
+	vertical-align: top;
 }

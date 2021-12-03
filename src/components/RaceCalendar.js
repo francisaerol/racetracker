@@ -165,12 +165,12 @@ function RaceCalendar(props) {
 
         let calEvent = calendar.getEventById(raceId);
         calEvent.setProp('title', raceName);
-        calEvent.setStart(raceDate);
-        calEvent.setEnd(raceDate);
+        calEvent.setAllDay(true);
         calEvent.setExtendedProp('type', raceType);
         calEvent.setExtendedProp('distance', raceDistance);
         calEvent.setExtendedProp('zip', raceZip);
         calEvent.setExtendedProp('race_link', raceLink);
+
 
         if(previousDistance !== raceDistance){
             let newDistance = -Math.abs(previousDistance) + raceDistance;
@@ -215,7 +215,6 @@ function RaceCalendar(props) {
         setRaceLink('');
         setRaceweather(0);
         setReadinness(0);
-
     }
 
     const openLink = () =>{

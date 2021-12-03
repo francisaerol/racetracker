@@ -6,6 +6,8 @@ import {
 } from "react-router-dom";
 
 import 'primereact/resources/themes/arya-blue/theme.css';
+// import 'primereact/resources/themes/saga-green/theme.css';
+// import 'primereact/resources/themes/saga-purple/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
