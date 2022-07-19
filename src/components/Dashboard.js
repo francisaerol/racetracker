@@ -45,7 +45,7 @@ function Dashboard() {
         RaceService.getEvents((races) => {
             let todaysDate = new Date();
 
-            let target = races.filter(race => new Date(race.date).getDate() > todaysDate.getDate() 
+            let target = races.filter(race => new Date(race.date).getYear() === todaysDate.getYear()
                     && new Date(race.date).getMonth() >= todaysDate.getMonth()).flatMap(i => i.distance)
                     .reduce((prevVal, curVal) => prevVal + curVal,0);
                                 
